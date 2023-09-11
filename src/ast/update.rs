@@ -89,9 +89,9 @@ impl<'a> Update<'a> {
     /// ```rust
     /// # use grafbase_sql_ast::{ast::*, renderer::{Renderer, self}};
     /// # fn main() {
-    /// let select = Select::from_table("bars")
-    ///     .column("id")
-    ///     .so_that("uniq_val".equals(3));
+    /// let mut select = Select::from_table("bars");
+    /// select.column("id");
+    /// select.so_that("uniq_val".equals(3));
     ///
     /// let query = Update::table("users").set("foo", 1).so_that("bar".equals(select));
     /// let (sql, params) = renderer::Postgres::build(query);
