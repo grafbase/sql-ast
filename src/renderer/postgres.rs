@@ -342,6 +342,12 @@ impl<'a> Renderer<'a> for Postgres {
             }
         });
     }
+
+    fn visit_to_jsonb(&mut self, to_jsonb: ToJsonb<'a>) {
+        self.write("to_jsonb(");
+        self.visit_table(to_jsonb.table, false);
+        self.write(".*)");
+    }
 }
 
 #[cfg(test)]
