@@ -10,9 +10,8 @@ pub struct Grouping<'a>(pub Vec<GroupByDefinition<'a>>);
 
 impl<'a> Grouping<'a> {
     #[doc(hidden)]
-    pub fn append(mut self, value: GroupByDefinition<'a>) -> Self {
+    pub fn append(&mut self, value: GroupByDefinition<'a>) {
         self.0.push(value);
-        self
     }
 
     pub fn new(values: Vec<GroupByDefinition<'a>>) -> Self {

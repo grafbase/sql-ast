@@ -101,6 +101,9 @@ pub trait Renderer<'a> {
     #[cfg(any(feature = "postgresql", feature = "mysql"))]
     fn visit_json_unquote(&mut self, json_unquote: JsonUnquote<'a>);
 
+    #[cfg(feature = "postgresql")]
+    fn visit_to_jsonb(&mut self, to_jsonb: ToJsonb<'a>);
+
     /// A visit to a value we parameterize
     fn visit_parameterized(&mut self, value: Value) {
         self.add_parameter(value);
@@ -880,6 +883,8 @@ pub trait Renderer<'a> {
             FunctionType::JsonUnquote(unquote) => {
                 self.visit_json_unquote(unquote);
             }
+            #[cfg(feature = "postgresql")]
+            FunctionType::ToJsonb(to_jsonb) => self.visit_to_jsonb(to_jsonb),
             FunctionType::Concat(concat) => {
                 self.visit_concat(concat);
             }

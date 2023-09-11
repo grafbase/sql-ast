@@ -13,7 +13,7 @@ impl<'a> RowNumber<'a> {
     where
         T: IntoOrderDefinition<'a>,
     {
-        self.over.ordering = self.over.ordering.append(value.into_order_definition());
+        self.over.ordering.append(value.into_order_definition());
         self
     }
 

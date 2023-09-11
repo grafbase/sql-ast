@@ -8,9 +8,8 @@ pub type OrderDefinition<'a> = (Expression<'a>, Option<Order>);
 pub struct Ordering<'a>(pub Vec<OrderDefinition<'a>>);
 
 impl<'a> Ordering<'a> {
-    pub fn append(mut self, value: OrderDefinition<'a>) -> Self {
+    pub fn append(&mut self, value: OrderDefinition<'a>) {
         self.0.push(value);
-        self
     }
 
     pub fn new(values: Vec<OrderDefinition<'a>>) -> Self {

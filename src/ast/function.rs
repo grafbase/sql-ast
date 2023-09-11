@@ -16,6 +16,8 @@ mod row_number;
 #[cfg(feature = "postgresql")]
 mod row_to_json;
 mod sum;
+#[cfg(feature = "postgresql")]
+mod to_jsonb;
 mod upper;
 
 pub use aggregate_to_string::*;
@@ -36,6 +38,8 @@ pub use row_number::*;
 #[cfg(feature = "postgresql")]
 pub use row_to_json::*;
 pub use sum::*;
+#[cfg(feature = "postgresql")]
+pub use to_jsonb::*;
 pub use upper::*;
 
 use super::Aliasable;
@@ -59,6 +63,8 @@ impl<'a> Function<'a> {
             FunctionType::JsonExtractLastArrayElem(_) => true,
             #[cfg(any(feature = "postgresql", feature = "mysql"))]
             FunctionType::JsonExtractFirstArrayElem(_) => true,
+            #[cfg(feature = "postgresql")]
+            FunctionType::ToJsonb(_) => true,
             _ => false,
         }
     }
@@ -87,6 +93,8 @@ pub(crate) enum FunctionType<'a> {
     JsonUnquote(JsonUnquote<'a>),
     #[cfg(feature = "postgresql")]
     RowToJson(RowToJson<'a>),
+    #[cfg(feature = "postgresql")]
+    ToJsonb(ToJsonb<'a>),
 }
 
 impl<'a> Aliasable<'a> for Function<'a> {
