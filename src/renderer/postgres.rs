@@ -444,7 +444,10 @@ mod tests {
             vec![10_i64, 2_i64],
         );
 
-        let query = Select::from_table("users").limit(10).offset(2);
+        let mut query = Select::from_table("users");
+        query.limit(10);
+        query.offset(2);
+
         let (sql, params) = Postgres::build(query);
 
         assert_eq!(expected.0, sql);
@@ -454,7 +457,10 @@ mod tests {
     #[test]
     fn test_limit_and_offset_when_only_offset_is_set() {
         let expected = expected_values("SELECT \"users\".* FROM \"users\" OFFSET $1", vec![10_i64]);
-        let query = Select::from_table("users").offset(10);
+
+        let mut query = Select::from_table("users");
+        query.offset(10);
+
         let (sql, params) = Postgres::build(query);
 
         assert_eq!(expected.0, sql);
@@ -464,7 +470,10 @@ mod tests {
     #[test]
     fn test_limit_and_offset_when_only_limit_is_set() {
         let expected = expected_values("SELECT \"users\".* FROM \"users\" LIMIT $1", vec![10_i64]);
-        let query = Select::from_table("users").limit(10);
+
+        let mut query = Select::from_table("users");
+        query.limit(10);
+
         let (sql, params) = Postgres::build(query);
 
         assert_eq!(expected.0, sql);
@@ -474,9 +483,11 @@ mod tests {
     #[test]
     fn test_distinct() {
         let expected_sql = "SELECT DISTINCT \"bar\" FROM \"test\"";
-        let query = Select::from_table("test")
-            .column(Column::new("bar"))
-            .distinct();
+
+        let mut query = Select::from_table("test");
+        query.column(Column::new("bar"));
+        query.distinct();
+
         let (sql, _) = Postgres::build(query);
 
         assert_eq!(expected_sql, sql);
@@ -485,10 +496,18 @@ mod tests {
     #[test]
     fn test_distinct_with_subquery() {
         let expected_sql = "SELECT DISTINCT (SELECT $1 FROM \"test2\"), \"bar\" FROM \"test\"";
-        let query = Select::from_table("test")
-            .value(Select::from_table("test2").value(1))
-            .column(Column::new("bar"))
-            .distinct();
+
+        let mut query = Select::from_table("test");
+
+        query.value({
+            let mut query = Select::from_table("test2");
+            query.value(1);
+
+            query
+        });
+
+        query.column(Column::new("bar"));
+        query.distinct();
 
         let (sql, _) = Postgres::build(query);
 
@@ -499,11 +518,21 @@ mod tests {
     fn test_from() {
         let expected_sql =
             "SELECT \"foo\".*, \"bar\".\"a\" FROM \"foo\", (SELECT \"a\" FROM \"baz\") AS \"bar\"";
-        let query = Select::default()
-            .and_from("foo")
-            .and_from(Table::from(Select::from_table("baz").column("a")).alias("bar"))
-            .value(Table::from("foo").asterisk())
-            .column(("bar", "a"));
+
+        let mut query = Select::default();
+        query.and_from("foo");
+
+        query.and_from(
+            Table::from({
+                let mut query = Select::from_table("baz");
+                query.column("a");
+                query
+            })
+            .alias("bar"),
+        );
+
+        query.value(Table::from("foo").asterisk());
+        query.column(("bar", "a"));
 
         let (sql, _) = Postgres::build(query);
         assert_eq!(expected_sql, sql);
@@ -516,7 +545,9 @@ mod tests {
             vec!["%foo%"],
         );
 
-        let query = Select::from_table("test").so_that(Column::from("jsonField").like("%foo%"));
+        let mut query = Select::from_table("test");
+        query.so_that(Column::from("jsonField").like("%foo%"));
+
         let (sql, params) = Postgres::build(query);
 
         assert_eq!(expected.0, sql);
@@ -530,7 +561,9 @@ mod tests {
             vec!["%foo%"],
         );
 
-        let query = Select::from_table("test").so_that(Column::from("jsonField").not_like("%foo%"));
+        let mut query = Select::from_table("test");
+        query.so_that(Column::from("jsonField").not_like("%foo%"));
+
         let (sql, params) = Postgres::build(query);
 
         assert_eq!(expected.0, sql);
@@ -544,7 +577,9 @@ mod tests {
             vec!["%foo"],
         );
 
-        let query = Select::from_table("test").so_that(Column::from("jsonField").like("%foo"));
+        let mut query = Select::from_table("test");
+        query.so_that(Column::from("jsonField").like("%foo"));
+
         let (sql, params) = Postgres::build(query);
 
         assert_eq!(expected.0, sql);
@@ -558,7 +593,9 @@ mod tests {
             vec!["%foo"],
         );
 
-        let query = Select::from_table("test").so_that(Column::from("jsonField").not_like("%foo"));
+        let mut query = Select::from_table("test");
+        query.so_that(Column::from("jsonField").not_like("%foo"));
+
         let (sql, params) = Postgres::build(query);
 
         assert_eq!(expected.0, sql);
@@ -572,7 +609,9 @@ mod tests {
             vec!["foo%"],
         );
 
-        let query = Select::from_table("test").so_that(Column::from("jsonField").like("foo%"));
+        let mut query = Select::from_table("test");
+        query.so_that(Column::from("jsonField").like("foo%"));
+
         let (sql, params) = Postgres::build(query);
 
         assert_eq!(expected.0, sql);
@@ -586,7 +625,9 @@ mod tests {
             vec!["foo%"],
         );
 
-        let query = Select::from_table("test").so_that(Column::from("jsonField").not_like("foo%"));
+        let mut query = Select::from_table("test");
+        query.so_that(Column::from("jsonField").not_like("foo%"));
+
         let (sql, params) = Postgres::build(query);
 
         assert_eq!(expected.0, sql);
@@ -614,7 +655,10 @@ mod tests {
                 .alias("p")
                 .on(("p", "userId").equals(Column::from(("User", "id")))),
         );
-        let q = Select::from_table(joined_table).and_from("Toto");
+
+        let mut q = Select::from_table(joined_table);
+        q.and_from("Toto");
+
         let (sql, _) = Postgres::build(q);
 
         assert_eq!("SELECT \"User\".*, \"Toto\".* FROM \"User\" LEFT JOIN \"Post\" AS \"p\" ON \"p\".\"userId\" = \"User\".\"id\", \"Toto\"", sql);

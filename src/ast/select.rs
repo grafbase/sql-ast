@@ -68,7 +68,10 @@ impl<'a> Select<'a> {
     /// ```rust
     /// # use grafbase_sql_ast::{ast::*, renderer::{self, Renderer}};
     /// # fn main() {
-    /// let select = Table::from(Select::default().value(1)).alias("num");
+    /// let mut inner_select = Select::default();
+    /// inner_select.value(1);
+    ///
+    /// let select = Table::from(inner_select).alias("num");
     /// let query = Select::from_table(select.alias("num"));
     /// let (sql, params) = renderer::Postgres::build(query);
     ///
@@ -91,22 +94,25 @@ impl<'a> Select<'a> {
     /// ```rust
     /// # use grafbase_sql_ast::{ast::*, renderer::{Renderer, self}};
     /// # fn main() {
-    /// let query = Select::from_table("users")
-    ///     .and_from(Table::from(Select::default().value(1)).alias("num"))
-    ///     .column(("users", "name"))
-    ///     .value(Table::from("num").asterisk());
+    /// let mut query = Select::from_table("users");
+    ///
+    /// let mut inner_select = Select::default();
+    /// inner_select.value(1);
+    ///
+    /// query.and_from(Table::from(inner_select).alias("num"));
+    /// query.column(("users", "name"));
+    /// query.value(Table::from("num").asterisk());
     ///
     /// let (sql, _) = renderer::Postgres::build(query);
     ///
     /// assert_eq!(r#"SELECT "users"."name", "num".* FROM "users", (SELECT $1) AS "num""#, sql);
     /// # }
     /// ```
-    pub fn and_from<T>(mut self, table: T) -> Self
+    pub fn and_from<T>(&mut self, table: T)
     where
         T: Into<Table<'a>>,
     {
         self.tables.push(table.into());
-        self
     }
 
     /// Selects a static value as the column.
@@ -114,19 +120,20 @@ impl<'a> Select<'a> {
     /// ```rust
     /// # use grafbase_sql_ast::{ast::*, renderer::{Renderer, self}};
     /// # fn main() {
-    /// let query = Select::default().value(1);
+    /// let mut query = Select::default();
+    /// query.value(1);
+    ///
     /// let (sql, params) = renderer::Postgres::build(query);
     ///
     /// assert_eq!("SELECT $1", sql);
     /// assert_eq!(vec![Value::from(1)], params);
     /// # }
     /// ```
-    pub fn value<T>(mut self, value: T) -> Self
+    pub fn value<T>(&mut self, value: T)
     where
         T: Into<Expression<'a>>,
     {
         self.columns.push(value.into());
-        self
     }
 
     /// Adds a column to be selected.
@@ -134,22 +141,22 @@ impl<'a> Select<'a> {
     /// ```rust
     /// # use grafbase_sql_ast::{ast::*, renderer::{Renderer, self}};
     /// # fn main() {
-    /// let query = Select::from_table("users")
-    ///     .column("name")
-    ///     .column(("users", "id"))
-    ///     .column((("crm", "users"), "foo"));
+    /// let mut query = Select::from_table("users");
+    ///
+    /// query.column("name");
+    /// query.column(("users", "id"));
+    /// query.column((("crm", "users"), "foo"));
     ///
     /// let (sql, _) = renderer::Postgres::build(query);
     ///
     /// assert_eq!(r#"SELECT "name", "users"."id", "crm"."users"."foo" FROM "users""#, sql);
     /// # }
     /// ```
-    pub fn column<T>(mut self, column: T) -> Self
+    pub fn column<T>(&mut self, column: T)
     where
         T: Into<Column<'a>>,
     {
         self.columns.push(column.into().into());
-        self
     }
 
     /// A bulk method to select multiple values.
@@ -177,15 +184,19 @@ impl<'a> Select<'a> {
     /// ```rust
     /// # use grafbase_sql_ast::{ast::*, renderer::{Renderer, self}};
     /// # fn main() {
-    /// let query = Select::from_table("users").column("foo").column("bar").distinct();
+    /// let mut query = Select::from_table("users");
+    ///
+    /// query.column("foo");
+    /// query.column("bar");
+    /// query.distinct();
+    ///
     /// let (sql, _) = renderer::Postgres::build(query);
     ///
     /// assert_eq!(r#"SELECT DISTINCT "foo", "bar" FROM "users""#, sql);
     /// # }
     /// ```
-    pub fn distinct(mut self) -> Self {
+    pub fn distinct(&mut self) {
         self.distinct = true;
-        self
     }
 
     /// Adds `WHERE` conditions to the query, replacing the previous conditions.
@@ -195,7 +206,9 @@ impl<'a> Select<'a> {
     /// ```rust
     /// # use grafbase_sql_ast::{ast::*, renderer::{Renderer, self}};
     /// # fn main() {
-    /// let query = Select::from_table("users").so_that("foo".equals("bar"));
+    /// let mut query = Select::from_table("users");
+    /// query.so_that("foo".equals("bar"));
+    ///
     /// let (sql, params) = renderer::Postgres::build(query);
     ///
     /// assert_eq!(r#"SELECT "users".* FROM "users" WHERE "foo" = $1"#, sql);
@@ -205,12 +218,11 @@ impl<'a> Select<'a> {
     /// ], params);
     /// # }
     /// ```
-    pub fn so_that<T>(mut self, conditions: T) -> Self
+    pub fn so_that<T>(&mut self, conditions: T)
     where
         T: Into<ConditionTree<'a>>,
     {
         self.conditions = Some(conditions.into());
-        self
     }
 
     /// Adds an additional `WHERE` condition to the query combining the possible
@@ -220,9 +232,10 @@ impl<'a> Select<'a> {
     /// ```rust
     /// # use grafbase_sql_ast::{ast::*, renderer::{Renderer, self}};
     /// # fn main() {
-    /// let query = Select::from_table("users")
-    ///     .so_that("foo".equals("bar"))
-    ///     .and_where("lol".equals("wtf"));
+    /// let mut query = Select::from_table("users");
+    ///
+    /// query.so_that("foo".equals("bar"));
+    /// query.and_where("lol".equals("wtf"));
     ///
     /// let (sql, params) = renderer::Postgres::build(query);
     ///
@@ -234,14 +247,13 @@ impl<'a> Select<'a> {
     /// ], params);
     /// # }
     /// ```
-    pub fn and_where<T>(mut self, conditions: T) -> Self
+    pub fn and_where<T>(&mut self, conditions: T)
     where
         T: Into<ConditionTree<'a>>,
     {
-        match self.conditions {
+        match self.conditions.take() {
             Some(previous) => {
                 self.conditions = Some(previous.and(conditions.into()));
-                self
             }
             None => self.so_that(conditions),
         }
@@ -254,9 +266,10 @@ impl<'a> Select<'a> {
     /// ```rust
     /// # use grafbase_sql_ast::{ast::*, renderer::{Renderer, self}};
     /// # fn main() {
-    /// let query = Select::from_table("users")
-    ///     .so_that("foo".equals("bar"))
-    ///     .or_where("lol".equals("wtf"));
+    /// let mut query = Select::from_table("users");
+    ///
+    /// query.so_that("foo".equals("bar"));
+    /// query.or_where("lol".equals("wtf"));
     ///
     /// let (sql, params) = renderer::Postgres::build(query);
     ///
@@ -268,14 +281,13 @@ impl<'a> Select<'a> {
     /// ], params);
     /// # }
     /// ```
-    pub fn or_where<T>(mut self, conditions: T) -> Self
+    pub fn or_where<T>(&mut self, conditions: T)
     where
         T: Into<ConditionTree<'a>>,
     {
-        match self.conditions {
+        match self.conditions.take() {
             Some(previous) => {
                 self.conditions = Some(previous.or(conditions.into()));
-                self
             }
             None => self.so_that(conditions),
         }
@@ -290,7 +302,9 @@ impl<'a> Select<'a> {
     ///     .alias("p")
     ///     .on(("p", "user_id").equals(Column::from(("users", "id"))));
     ///
-    /// let query = Select::from_table("users").inner_join(join);
+    /// let mut query = Select::from_table("users");
+    /// query.inner_join(join);
+    ///
     /// let (sql, _) = renderer::Postgres::build(query);
     ///
     /// assert_eq!(
@@ -299,12 +313,11 @@ impl<'a> Select<'a> {
     /// );
     /// # }
     /// ```
-    pub fn inner_join<J>(mut self, join: J) -> Self
+    pub fn inner_join<J>(&mut self, join: J)
     where
         J: Into<JoinData<'a>>,
     {
         self.joins.push(Join::Inner(join.into()));
-        self
     }
 
     /// Adds `LEFT JOIN` clause to the query.
@@ -316,7 +329,9 @@ impl<'a> Select<'a> {
     ///    .alias("p")
     ///    .on(("p", "visible").equals(true));
     ///
-    /// let query = Select::from_table("users").left_join(join);
+    /// let mut query = Select::from_table("users");
+    /// query.left_join(join);
+    ///
     /// let (sql, params) = renderer::Postgres::build(query);
     ///
     /// assert_eq!(
@@ -332,12 +347,11 @@ impl<'a> Select<'a> {
     /// );
     /// # }
     /// ```
-    pub fn left_join<J>(mut self, join: J) -> Self
+    pub fn left_join<J>(&mut self, join: J)
     where
         J: Into<JoinData<'a>>,
     {
         self.joins.push(Join::Left(join.into()));
-        self
     }
 
     /// Adds `RIGHT JOIN` clause to the query.
@@ -350,7 +364,9 @@ impl<'a> Select<'a> {
     ///    .on(("p", "visible").equals(true));
     ///
     ///
-    /// let query = Select::from_table("users").right_join(join);
+    /// let mut query = Select::from_table("users");
+    /// query.right_join(join);
+    ///
     /// let (sql, params) = renderer::Postgres::build(query);
     ///
     /// assert_eq!(
@@ -366,12 +382,11 @@ impl<'a> Select<'a> {
     /// );
     /// # }
     /// ```
-    pub fn right_join<J>(mut self, join: J) -> Self
+    pub fn right_join<J>(&mut self, join: J)
     where
         J: Into<JoinData<'a>>,
     {
         self.joins.push(Join::Right(join.into()));
-        self
     }
 
     /// Adds `FULL JOIN` clause to the query.
@@ -383,8 +398,9 @@ impl<'a> Select<'a> {
     ///    .alias("p")
     ///    .on(("p", "visible").equals(true));
     ///
+    /// let mut query = Select::from_table("users");
+    /// query.full_join(join);
     ///
-    /// let query = Select::from_table("users").full_join(join);
     /// let (sql, params) = renderer::Postgres::build(query);
     ///
     /// assert_eq!(
@@ -400,12 +416,11 @@ impl<'a> Select<'a> {
     /// );
     /// # }
     /// ```
-    pub fn full_join<J>(mut self, join: J) -> Self
+    pub fn full_join<J>(&mut self, join: J)
     where
         J: Into<JoinData<'a>>,
     {
         self.joins.push(Join::Full(join.into()));
-        self
     }
 
     /// Adds an ordering to the `ORDER BY` section.
@@ -413,21 +428,20 @@ impl<'a> Select<'a> {
     /// ```rust
     /// # use grafbase_sql_ast::{ast::*, renderer::{Renderer, self}};
     /// # fn main() {
-    /// let query = Select::from_table("users")
-    ///     .order_by("foo")
-    ///     .order_by("baz".ascend())
-    ///     .order_by("bar".descend());
+    /// let mut query = Select::from_table("users");
+    /// query.order_by("foo");
+    /// query.order_by("baz".ascend());
+    /// query.order_by("bar".descend());
     ///
     /// let (sql, _) = renderer::Postgres::build(query);
     ///
     /// assert_eq!(r#"SELECT "users".* FROM "users" ORDER BY "foo", "baz" ASC, "bar" DESC"#, sql);
     /// # }
-    pub fn order_by<T>(mut self, value: T) -> Self
+    pub fn order_by<T>(&mut self, value: T)
     where
         T: IntoOrderDefinition<'a>,
     {
-        self.ordering = self.ordering.append(value.into_order_definition());
-        self
+        self.ordering.append(value.into_order_definition());
     }
 
     /// Adds a grouping to the `GROUP BY` section.
@@ -437,20 +451,22 @@ impl<'a> Select<'a> {
     /// ```rust
     /// # use grafbase_sql_ast::{ast::*, renderer::{Renderer, self}};
     /// # fn main() {
-    /// let query = Select::from_table("users").column("foo").column("bar")
-    ///     .group_by("foo")
-    ///     .group_by("bar");
+    /// let mut query = Select::from_table("users");
+    ///
+    /// query.column("foo");
+    /// query.column("bar");
+    /// query.group_by("foo");
+    /// query.group_by("bar");
     ///
     /// let (sql, _) = renderer::Postgres::build(query);
     ///
     /// assert_eq!(r#"SELECT "foo", "bar" FROM "users" GROUP BY "foo", "bar""#, sql);
     /// # }
-    pub fn group_by<T>(mut self, value: T) -> Self
+    pub fn group_by<T>(&mut self, value: T)
     where
         T: IntoGroupByDefinition<'a>,
     {
-        self.grouping = self.grouping.append(value.into_group_by_definition());
-        self
+        self.grouping.append(value.into_group_by_definition());
     }
 
     /// Adds group conditions to a query. Should be combined together with a
@@ -459,21 +475,23 @@ impl<'a> Select<'a> {
     /// ```rust
     /// # use grafbase_sql_ast::{ast::*, renderer::{Renderer, self}};
     /// # fn main() {
-    /// let query = Select::from_table("users").column("foo").column("bar")
-    ///     .group_by("foo")
-    ///     .having("foo".greater_than(100));
+    /// let mut query = Select::from_table("users");
+    ///
+    /// query.column("foo");
+    /// query.column("bar");
+    /// query.group_by("foo");
+    /// query.having("foo".greater_than(100));
     ///
     /// let (sql, params) = renderer::Postgres::build(query);
     ///
     /// assert_eq!(r#"SELECT "foo", "bar" FROM "users" GROUP BY "foo" HAVING "foo" > $1"#, sql);
     /// assert_eq!(vec![Value::from(100)], params);
     /// # }
-    pub fn having<T>(mut self, conditions: T) -> Self
+    pub fn having<T>(&mut self, conditions: T)
     where
         T: Into<ConditionTree<'a>>,
     {
         self.having = Some(conditions.into());
-        self
     }
 
     /// Sets the `LIMIT` value.
@@ -481,15 +499,16 @@ impl<'a> Select<'a> {
     /// ```rust
     /// # use grafbase_sql_ast::{ast::*, renderer::{Renderer, self}};
     /// # fn main() {
-    /// let query = Select::from_table("users").limit(10);
+    /// let mut query = Select::from_table("users");
+    /// query.limit(10);
+    ///
     /// let (sql, params) = renderer::Postgres::build(query);
     ///
     /// assert_eq!(r#"SELECT "users".* FROM "users" LIMIT $1"#, sql);
     /// assert_eq!(vec![Value::from(10_i64)], params);
     /// # }
-    pub fn limit(mut self, limit: u32) -> Self {
+    pub fn limit(&mut self, limit: u32) {
         self.limit = Some(limit);
-        self
     }
 
     /// Sets the `OFFSET` value.
@@ -497,14 +516,15 @@ impl<'a> Select<'a> {
     /// ```rust
     /// # use grafbase_sql_ast::{ast::*, renderer::{Renderer, self}};
     /// # fn main() {
-    /// let query = Select::from_table("users").offset(10);
+    /// let mut query = Select::from_table("users");
+    /// query.offset(10);
+    ///
     /// let (sql, params) = renderer::Postgres::build(query);
     ///
     /// assert_eq!(r#"SELECT "users".* FROM "users" OFFSET $1"#, sql);
     /// assert_eq!(vec![Value::from(10_i64)], params);
     /// # }
-    pub fn offset(mut self, offset: u32) -> Self {
+    pub fn offset(&mut self, offset: u32) {
         self.offset = Some(offset);
-        self
     }
 }
