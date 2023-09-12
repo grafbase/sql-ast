@@ -353,7 +353,7 @@ impl<'a> Renderer<'a> for Postgres {
         self.write("json_agg(");
 
         if json_agg.distinct {
-            self.write(" DISTINCT ");
+            self.write("DISTINCT ");
         }
 
         self.visit_expression(json_agg.expression);
