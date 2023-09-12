@@ -1,5 +1,5 @@
 use super::Function;
-use crate::ast::{Column, Expression};
+use crate::ast::{Column, Expression, Table};
 
 /// Defines a grouping for the `GROUP BY` statement.
 pub type GroupByDefinition<'a> = Expression<'a>;
@@ -48,6 +48,15 @@ impl<'a> IntoGroupByDefinition<'a> for (&'a str, &'a str) {
     fn into_group_by_definition(self) -> GroupByDefinition<'a> {
         let column: Column = self.into();
         column.into()
+    }
+}
+
+impl<'a> IntoGroupByDefinition<'a> for (&'a str, &'a str, &'a str) {
+    fn into_group_by_definition(self) -> GroupByDefinition<'a> {
+        let table: Table = self.1.into();
+        let column: Column = self.2.into();
+
+        column.table(table.database(self.0)).into()
     }
 }
 
