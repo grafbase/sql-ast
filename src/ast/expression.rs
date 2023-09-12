@@ -34,6 +34,8 @@ impl<'a> Expression<'a> {
 pub enum ExpressionKind<'a> {
     /// Anything that we must parameterize before querying
     Parameterized(Value),
+    /// Will be rendered as-is to the SQL statement. Carefully escape, if needed.
+    Raw(&'a str),
     /// A database column
     Column(Box<Column<'a>>),
     /// Data in a row form, e.g. (1, 2, 3)
@@ -56,6 +58,14 @@ pub enum ExpressionKind<'a> {
     Values(Values<'a>),
     /// DEFAULT keyword, e.g. for `INSERT INTO ... VALUES (..., DEFAULT, ...)`
     Default,
+}
+
+/// A quick alias to create a raw value expression.
+pub fn raw<'a>(value: &'a str) -> Expression<'a> {
+    Expression {
+        kind: ExpressionKind::Raw(value),
+        alias: None,
+    }
 }
 
 /// A quick alias to create an asterisk to a table.

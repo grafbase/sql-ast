@@ -403,6 +403,7 @@ pub trait Renderer<'a> {
     fn visit_expression(&mut self, value: Expression<'a>) {
         match value.kind {
             ExpressionKind::Value(value) => self.visit_expression(*value),
+            ExpressionKind::Raw(value) => self.write(value),
             ExpressionKind::ConditionTree(tree) => self.visit_conditions(tree),
             ExpressionKind::Compare(compare) => self.visit_compare(compare),
             ExpressionKind::Parameterized(val) => self.visit_parameterized(val),
