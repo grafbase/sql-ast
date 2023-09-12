@@ -104,6 +104,9 @@ pub trait Renderer<'a> {
     #[cfg(feature = "postgresql")]
     fn visit_to_jsonb(&mut self, to_jsonb: ToJsonb<'a>);
 
+    #[cfg(feature = "postgresql")]
+    fn visit_json_agg(&mut self, to_jsonb: JsonAgg<'a>);
+
     /// A visit to a value we parameterize
     fn visit_parameterized(&mut self, value: Value) {
         self.add_parameter(value);
@@ -885,6 +888,8 @@ pub trait Renderer<'a> {
             }
             #[cfg(feature = "postgresql")]
             FunctionType::ToJsonb(to_jsonb) => self.visit_to_jsonb(to_jsonb),
+            #[cfg(feature = "postgresql")]
+            FunctionType::JsonAgg(json_agg) => self.visit_json_agg(json_agg),
             FunctionType::Concat(concat) => {
                 self.visit_concat(concat);
             }

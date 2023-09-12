@@ -348,13 +348,24 @@ impl<'a> Renderer<'a> for Postgres {
         self.visit_table(to_jsonb.table, false);
         self.write(".*)");
     }
+
+    fn visit_json_agg(&mut self, json_agg: JsonAgg<'a>) {
+        self.write("json_agg(");
+
+        if json_agg.distinct {
+            self.write(" DISTINCT ");
+        }
+
+        self.visit_expression(json_agg.expression);
+        self.write(")");
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use crate::renderer::*;
 
-    fn expected_values<'a, T>(sql: &'static str, params: Vec<T>) -> (String, Vec<Value>)
+    fn expected_values<T>(sql: &'static str, params: Vec<T>) -> (String, Vec<Value>)
     where
         T: Into<Value>,
     {
