@@ -423,6 +423,7 @@ pub trait Renderer<'a> {
                 None => self.write("*"),
             },
             ExpressionKind::Default => self.write("DEFAULT"),
+            ExpressionKind::Table(table) => self.visit_table(*table, false),
         }
 
         if let Some(alias) = value.alias {

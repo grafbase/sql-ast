@@ -359,6 +359,7 @@ impl<'a> Renderer<'a> for Postgres {
         self.visit_expression(json_agg.expression);
 
         if let Some(ordering) = json_agg.order_by {
+            self.write(" ORDER BY ");
             self.visit_ordering(ordering);
         }
 

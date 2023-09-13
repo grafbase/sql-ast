@@ -38,6 +38,8 @@ pub enum ExpressionKind<'a> {
     Raw(&'a str),
     /// A database column
     Column(Box<Column<'a>>),
+    /// A database column
+    Table(Box<Table<'a>>),
     /// Data in a row form, e.g. (1, 2, 3)
     Row(Row<'a>),
     /// A nested `SELECT` or `SELECT .. UNION` statement
@@ -61,7 +63,7 @@ pub enum ExpressionKind<'a> {
 }
 
 /// A quick alias to create a raw value expression.
-pub fn raw<'a>(value: &'a str) -> Expression<'a> {
+pub fn raw(value: &str) -> Expression<'_> {
     Expression {
         kind: ExpressionKind::Raw(value),
         alias: None,
@@ -127,6 +129,15 @@ impl<'a> From<Row<'a>> for Expression<'a> {
     fn from(value: Row<'a>) -> Self {
         Expression {
             kind: ExpressionKind::Row(value),
+            alias: None,
+        }
+    }
+}
+
+impl<'a> From<Table<'a>> for Expression<'a> {
+    fn from(value: Table<'a>) -> Self {
+        Self {
+            kind: ExpressionKind::Table(Box::new(value)),
             alias: None,
         }
     }
