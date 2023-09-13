@@ -5,6 +5,8 @@ use crate::ast::{ConditionTree, Table};
 pub struct JoinData<'a> {
     pub(crate) table: Table<'a>,
     pub(crate) conditions: ConditionTree<'a>,
+    #[cfg(feature = "postgresql")]
+    pub(crate) lateral: bool,
 }
 
 impl<'a> JoinData<'a> {
@@ -13,7 +15,13 @@ impl<'a> JoinData<'a> {
         Self {
             table: table.into(),
             conditions: ConditionTree::NoCondition,
+            lateral: false,
         }
+    }
+
+    /// Join as lateral join.
+    pub fn lateral(&mut self) {
+        self.lateral = true;
     }
 }
 
@@ -58,6 +66,7 @@ where
         JoinData {
             table: self.into(),
             conditions: conditions.into(),
+            lateral: false,
         }
     }
 }
@@ -75,6 +84,7 @@ impl<'a> Joinable<'a> for JoinData<'a> {
         JoinData {
             table: self.table,
             conditions,
+            lateral: false,
         }
     }
 }

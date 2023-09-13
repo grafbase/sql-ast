@@ -359,6 +359,16 @@ impl<'a> Renderer<'a> for Postgres {
         self.visit_expression(json_agg.expression);
         self.write(")");
     }
+
+    fn visit_join_data(&mut self, data: JoinData<'a>) {
+        if data.lateral {
+            self.write(" LATERAL ");
+        }
+
+        self.visit_table(data.table, true);
+        self.write(" ON ");
+        self.visit_conditions(data.conditions)
+    }
 }
 
 #[cfg(test)]
