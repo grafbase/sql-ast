@@ -93,7 +93,13 @@ pub trait Renderer<'a> {
     fn visit_json_extract_first_array_item(&mut self, extract: JsonExtractFirstArrayElem<'a>);
 
     #[cfg(any(feature = "postgresql", feature = "mysql"))]
-    fn visit_json_array_contains(&mut self, left: Expression<'a>, right: Expression<'a>, not: bool);
+    fn visit_array_contains(&mut self, left: Expression<'a>, right: Expression<'a>, not: bool);
+
+    #[cfg(any(feature = "postgresql", feature = "mysql"))]
+    fn visit_array_contained(&mut self, left: Expression<'a>, right: Expression<'a>, not: bool);
+
+    #[cfg(any(feature = "postgresql", feature = "mysql"))]
+    fn visit_array_overlaps(&mut self, left: Expression<'a>, right: Expression<'a>);
 
     #[cfg(any(feature = "postgresql", feature = "mysql"))]
     fn visit_json_type_equals(&mut self, left: Expression<'a>, right: JsonType<'a>, not: bool);
@@ -772,10 +778,14 @@ pub trait Renderer<'a> {
             #[cfg(any(feature = "mysql", feature = "postgresql"))]
             Compare::JsonCompare(json_compare) => match json_compare {
                 JsonCompare::ArrayContains(left, right) => {
-                    self.visit_json_array_contains(*left, *right, false)
+                    self.visit_array_contains(*left, *right, false)
                 }
+                JsonCompare::ArrayContained(left, right) => {
+                    self.visit_array_contained(*left, *right, false)
+                }
+                JsonCompare::ArrayOverlaps(left, right) => self.visit_array_overlaps(*left, *right),
                 JsonCompare::ArrayNotContains(left, right) => {
-                    self.visit_json_array_contains(*left, *right, true)
+                    self.visit_array_contains(*left, *right, true)
                 }
                 JsonCompare::TypeEquals(left, json_type) => {
                     self.visit_json_type_equals(*left, json_type, false)

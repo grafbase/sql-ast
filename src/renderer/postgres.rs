@@ -218,12 +218,7 @@ impl<'a> Renderer<'a> for Postgres {
         self.write(")");
     }
 
-    fn visit_json_array_contains(
-        &mut self,
-        left: Expression<'a>,
-        right: Expression<'a>,
-        not: bool,
-    ) {
+    fn visit_array_contains(&mut self, left: Expression<'a>, right: Expression<'a>, not: bool) {
         if not {
             self.write("( NOT ");
         }
@@ -235,6 +230,26 @@ impl<'a> Renderer<'a> for Postgres {
         if not {
             self.write(" )");
         }
+    }
+
+    fn visit_array_contained(&mut self, left: Expression<'a>, right: Expression<'a>, not: bool) {
+        if not {
+            self.write("( NOT ");
+        }
+
+        self.visit_expression(left);
+        self.write(" <@ ");
+        self.visit_expression(right);
+
+        if not {
+            self.write(" )");
+        }
+    }
+
+    fn visit_array_overlaps(&mut self, left: Expression<'a>, right: Expression<'a>) {
+        self.visit_expression(left);
+        self.write(" && ");
+        self.visit_expression(right);
     }
 
     fn visit_json_extract_last_array_item(&mut self, extract: JsonExtractLastArrayElem<'a>) {

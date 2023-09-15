@@ -279,11 +279,33 @@ impl<'a> Comparable<'a> for Expression<'a> {
     }
 
     #[cfg(all(feature = "postgresql", feature = "mysql"))]
-    fn json_array_contains<T>(self, item: T) -> Compare<'a>
+    fn array_contains<T>(self, item: T) -> Compare<'a>
     where
         T: Into<Expression<'a>>,
     {
         Compare::JsonCompare(JsonCompare::ArrayContains(
+            Box::new(self),
+            Box::new(item.into()),
+        ))
+    }
+
+    #[cfg(all(feature = "postgresql", feature = "mysql"))]
+    fn array_contained<T>(self, item: T) -> Compare<'a>
+    where
+        T: Into<Expression<'a>>,
+    {
+        Compare::JsonCompare(JsonCompare::ArrayContained(
+            Box::new(self),
+            Box::new(item.into()),
+        ))
+    }
+
+    #[cfg(all(feature = "postgresql", feature = "mysql"))]
+    fn array_overlaps<T>(self, item: T) -> Compare<'a>
+    where
+        T: Into<Expression<'a>>,
+    {
+        Compare::JsonCompare(JsonCompare::ArrayOverlaps(
             Box::new(self),
             Box::new(item.into()),
         ))

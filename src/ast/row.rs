@@ -290,14 +290,35 @@ impl<'a> Comparable<'a> for Row<'a> {
         value.compare_raw(raw_comparator, right)
     }
 
+    /// Tests if the array overlaps with another array.
     #[cfg(any(feature = "postgresql", feature = "mysql"))]
-    fn json_array_contains<T>(self, item: T) -> Compare<'a>
+    fn array_overlaps<T>(self, item: T) -> Compare<'a>
     where
         T: Into<Expression<'a>>,
     {
         let value: Expression<'a> = self.into();
 
-        value.json_array_contains(item)
+        value.array_overlaps(item)
+    }
+
+    #[cfg(any(feature = "postgresql", feature = "mysql"))]
+    fn array_contains<T>(self, item: T) -> Compare<'a>
+    where
+        T: Into<Expression<'a>>,
+    {
+        let value: Expression<'a> = self.into();
+
+        value.array_contains(item)
+    }
+
+    #[cfg(any(feature = "postgresql", feature = "mysql"))]
+    fn array_contained<T>(self, item: T) -> Compare<'a>
+    where
+        T: Into<Expression<'a>>,
+    {
+        let value: Expression<'a> = self.into();
+
+        value.array_contained(item)
     }
 
     #[cfg(any(feature = "postgresql", feature = "mysql"))]

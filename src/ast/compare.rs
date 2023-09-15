@@ -57,7 +57,9 @@ pub enum Compare<'a> {
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum JsonCompare<'a> {
+    ArrayOverlaps(Box<Expression<'a>>, Box<Expression<'a>>),
     ArrayContains(Box<Expression<'a>>, Box<Expression<'a>>),
+    ArrayContained(Box<Expression<'a>>, Box<Expression<'a>>),
     ArrayNotContains(Box<Expression<'a>>, Box<Expression<'a>>),
     TypeEquals(Box<Expression<'a>>, JsonType<'a>),
     TypeNotEquals(Box<Expression<'a>>, JsonType<'a>),
@@ -167,9 +169,21 @@ pub trait Comparable<'a> {
         T: Into<Expression<'a>>,
         V: Into<Expression<'a>>;
 
+    /// Tests if the array overlaps with another array.
+    #[cfg(any(feature = "postgresql", feature = "mysql"))]
+    fn array_overlaps<T>(self, item: T) -> Compare<'a>
+    where
+        T: Into<Expression<'a>>;
+
+    /// Tests if the array contains another array.
+    #[cfg(any(feature = "postgresql", feature = "mysql"))]
+    fn array_contains<T>(self, item: T) -> Compare<'a>
+    where
+        T: Into<Expression<'a>>;
+
     /// Tests if the JSON array contains a value.
     #[cfg(any(feature = "postgresql", feature = "mysql"))]
-    fn json_array_contains<T>(self, item: T) -> Compare<'a>
+    fn array_contained<T>(self, item: T) -> Compare<'a>
     where
         T: Into<Expression<'a>>;
 
@@ -372,14 +386,36 @@ where
     }
 
     #[cfg(any(feature = "postgresql", feature = "mysql"))]
-    fn json_array_contains<T>(self, item: T) -> Compare<'a>
+    fn array_overlaps<T>(self, item: T) -> Compare<'a>
     where
         T: Into<Expression<'a>>,
     {
         let col: Column<'a> = self.into();
         let val: Expression<'a> = col.into();
 
-        val.json_array_contains(item)
+        val.array_overlaps(item)
+    }
+
+    #[cfg(any(feature = "postgresql", feature = "mysql"))]
+    fn array_contains<T>(self, item: T) -> Compare<'a>
+    where
+        T: Into<Expression<'a>>,
+    {
+        let col: Column<'a> = self.into();
+        let val: Expression<'a> = col.into();
+
+        val.array_contains(item)
+    }
+
+    #[cfg(any(feature = "postgresql", feature = "mysql"))]
+    fn array_contained<T>(self, item: T) -> Compare<'a>
+    where
+        T: Into<Expression<'a>>,
+    {
+        let col: Column<'a> = self.into();
+        let val: Expression<'a> = col.into();
+
+        val.array_contained(item)
     }
 
     #[cfg(any(feature = "postgresql", feature = "mysql"))]
