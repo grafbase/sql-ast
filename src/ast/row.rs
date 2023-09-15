@@ -1,3 +1,5 @@
+use serde_json::Value;
+
 #[cfg(any(feature = "postgresql", feature = "mysql"))]
 use super::compare::JsonType;
 use crate::ast::{Comparable, Compare, Expression};
@@ -144,6 +146,27 @@ where
         row.push(vals.4);
 
         row
+    }
+}
+
+impl<'a> From<Value> for Row<'a> {
+    fn from(value: Value) -> Self {
+        match value {
+            Value::Array(values) => {
+                let mut row = Row::with_capacity(values.len());
+
+                for value in values {
+                    row.push(value);
+                }
+
+                row
+            }
+            value => {
+                let mut row = Row::with_capacity(1);
+                row.push(value);
+                row
+            }
+        }
     }
 }
 
