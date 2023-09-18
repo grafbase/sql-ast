@@ -22,11 +22,6 @@ impl<'a> Expression<'a> {
     pub fn kind(&self) -> &ExpressionKind<'a> {
         &self.kind
     }
-
-    /// The name alias of the expression, how it can referred in the query.
-    pub fn alias(&self) -> Option<&str> {
-        self.alias.as_ref().map(|s| s.as_ref())
-    }
 }
 
 /// An expression we can compare and use in database queries.
