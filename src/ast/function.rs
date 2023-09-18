@@ -4,6 +4,8 @@ mod coalesce;
 mod concat;
 mod count;
 #[cfg(feature = "postgresql")]
+mod encode;
+#[cfg(feature = "postgresql")]
 mod json_agg;
 #[cfg(any(feature = "postgresql", feature = "mysql"))]
 mod json_extract;
@@ -27,6 +29,8 @@ pub use average::*;
 pub use coalesce::*;
 pub use concat::*;
 pub use count::*;
+#[cfg(feature = "postgresql")]
+pub use encode::*;
 #[cfg(feature = "postgresql")]
 pub use json_agg::*;
 #[cfg(any(feature = "postgresql", feature = "mysql"))]
@@ -101,6 +105,8 @@ pub(crate) enum FunctionType<'a> {
     ToJsonb(ToJsonb<'a>),
     #[cfg(feature = "postgresql")]
     JsonAgg(JsonAgg<'a>),
+    #[cfg(feature = "postgresql")]
+    Encode(Encode<'a>),
 }
 
 impl<'a> Aliasable<'a> for Function<'a> {

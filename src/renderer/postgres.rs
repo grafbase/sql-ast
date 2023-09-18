@@ -381,6 +381,20 @@ impl<'a> Renderer<'a> for Postgres {
         self.write(")");
     }
 
+    fn visit_encode(&mut self, encode: Encode<'a>) {
+        self.write("encode(");
+        self.visit_expression(encode.expression);
+        self.write(", ");
+
+        match encode.format {
+            EncodeFormat::Base64 => self.write("'base64'"),
+            EncodeFormat::Escape => self.write("'escape'"),
+            EncodeFormat::Hex => self.write("'hex'"),
+        }
+
+        self.write(")");
+    }
+
     fn visit_join_data(&mut self, data: JoinData<'a>) {
         if data.lateral {
             self.write(" LATERAL ");
