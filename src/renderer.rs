@@ -553,6 +553,13 @@ pub trait Renderer<'a> {
             ConditionTree::Single(expression) => self.visit_expression(*expression),
             ConditionTree::NoCondition => self.write("1=1"),
             ConditionTree::NegativeCondition => self.write("1=0"),
+            ConditionTree::Exists(table) => self.surround_with("(", ")", |ref mut s| {
+                s.write("EXISTS ");
+
+                s.surround_with("(", ")", |ref mut s| {
+                    s.visit_table(*table, false);
+                })
+            }),
         }
     }
 

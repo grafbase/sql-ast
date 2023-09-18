@@ -1,5 +1,7 @@
 use crate::ast::{Expression, ExpressionKind, Select};
 
+use super::Table;
+
 /// Tree structures and leaves for condition building.
 #[derive(Debug, PartialEq, Clone, Default)]
 pub enum ConditionTree<'a> {
@@ -16,6 +18,8 @@ pub enum ConditionTree<'a> {
     NoCondition,
     /// A leaf that cancels the condition, `1=0`
     NegativeCondition,
+    /// Exists condition
+    Exists(Box<Table<'a>>),
 }
 
 impl<'a> ConditionTree<'a> {
@@ -63,6 +67,14 @@ impl<'a> ConditionTree<'a> {
         E: Into<Expression<'a>>,
     {
         ConditionTree::Single(Box::new(left.into()))
+    }
+
+    /// True if a nested table has any values.
+    pub fn exists<E>(select: E) -> ConditionTree<'a>
+    where
+        E: Into<Table<'a>>,
+    {
+        ConditionTree::Exists(Box::new(select.into()))
     }
 
     /// Inverts the entire condition tree if condition is met.
