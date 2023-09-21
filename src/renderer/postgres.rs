@@ -329,10 +329,10 @@ impl<'a> Renderer<'a> for Postgres {
             let direction = ordering.map(|dir| match dir {
                 Order::Asc => " ASC",
                 Order::Desc => " DESC",
-                Order::AscNullsFirst => "ASC NULLS FIRST",
-                Order::AscNullsLast => "ASC NULLS LAST",
-                Order::DescNullsFirst => "DESC NULLS FIRST",
-                Order::DescNullsLast => "DESC NULLS LAST",
+                Order::AscNullsFirst => " ASC NULLS FIRST",
+                Order::AscNullsLast => " ASC NULLS LAST",
+                Order::DescNullsFirst => " DESC NULLS FIRST",
+                Order::DescNullsLast => " DESC NULLS LAST",
             });
 
             self.visit_expression(value);
