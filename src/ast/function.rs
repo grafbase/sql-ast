@@ -7,6 +7,8 @@ mod count;
 mod encode;
 #[cfg(feature = "postgresql")]
 mod json_agg;
+#[cfg(feature = "postgresql")]
+mod json_build_object;
 #[cfg(any(feature = "postgresql", feature = "mysql"))]
 mod json_extract;
 #[cfg(any(feature = "postgresql", feature = "mysql"))]
@@ -33,6 +35,8 @@ pub use count::*;
 pub use encode::*;
 #[cfg(feature = "postgresql")]
 pub use json_agg::*;
+#[cfg(feature = "postgresql")]
+pub use json_build_object::*;
 #[cfg(any(feature = "postgresql", feature = "mysql"))]
 pub use json_extract::*;
 #[cfg(any(feature = "postgresql", feature = "mysql"))]
@@ -107,6 +111,8 @@ pub(crate) enum FunctionType<'a> {
     JsonAgg(JsonAgg<'a>),
     #[cfg(feature = "postgresql")]
     Encode(Encode<'a>),
+    #[cfg(feature = "postgresql")]
+    JsonBuildObject(JsonBuildObject<'a>),
 }
 
 impl<'a> Aliasable<'a> for Function<'a> {

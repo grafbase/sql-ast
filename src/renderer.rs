@@ -111,6 +111,9 @@ pub trait Renderer<'a> {
     fn visit_to_jsonb(&mut self, to_jsonb: ToJsonb<'a>);
 
     #[cfg(feature = "postgresql")]
+    fn visit_json_build_object(&mut self, json_build_object: JsonBuildObject<'a>);
+
+    #[cfg(feature = "postgresql")]
     fn visit_json_agg(&mut self, to_jsonb: JsonAgg<'a>);
 
     #[cfg(feature = "postgresql")]
@@ -914,6 +917,8 @@ pub trait Renderer<'a> {
             FunctionType::JsonAgg(json_agg) => self.visit_json_agg(json_agg),
             #[cfg(feature = "postgresql")]
             FunctionType::Encode(encode) => self.visit_encode(encode),
+            #[cfg(feature = "postgresql")]
+            FunctionType::JsonBuildObject(encode) => self.visit_json_build_object(encode),
             FunctionType::Concat(concat) => {
                 self.visit_concat(concat);
             }

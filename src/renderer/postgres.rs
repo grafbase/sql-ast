@@ -364,6 +364,26 @@ impl<'a> Renderer<'a> for Postgres {
         self.write(".*)");
     }
 
+    fn visit_json_build_object(&mut self, json_build_object: JsonBuildObject<'a>) {
+        let values_length = json_build_object.values.len();
+        self.write("json_build_object(");
+
+        for (i, (name, expression)) in json_build_object.values.into_iter().enumerate() {
+            self.surround_with("'", "'", |renderer| {
+                renderer.write(&name);
+            });
+
+            self.write(", ");
+            self.visit_expression(expression);
+
+            if i < (values_length - 1) {
+                self.write(",");
+            }
+        }
+
+        self.write(")");
+    }
+
     fn visit_json_agg(&mut self, json_agg: JsonAgg<'a>) {
         self.write("json_agg(");
 
@@ -408,7 +428,7 @@ impl<'a> Renderer<'a> for Postgres {
 
 #[cfg(test)]
 mod tests {
-    use crate::renderer::*;
+    use crate::{ast::json_build_object, renderer::*};
 
     fn expected_values<T>(sql: &'static str, params: Vec<T>) -> (String, Vec<Value>)
     where
@@ -724,5 +744,28 @@ mod tests {
         let (sql, _) = Postgres::build(q);
 
         assert_eq!("SELECT \"User\".*, \"Toto\".* FROM \"User\" LEFT JOIN \"Post\" AS \"p\" ON \"p\".\"userId\" = \"User\".\"id\", \"Toto\"", sql);
+    }
+
+    #[test]
+    fn test_json_build_object_raw_value() {
+        let mut select = Select::default();
+        select.value(json_build_object([("id", raw("1"))]));
+
+        let (sql, _) = Postgres::build(select);
+
+        assert_eq!(r#"SELECT json_build_object('id', 1)"#, sql);
+    }
+
+    #[test]
+    fn test_json_build_object_column() {
+        let mut select = Select::from_table("User");
+        select.value(json_build_object([("name", Column::from("name"))]));
+
+        let (sql, _) = Postgres::build(select);
+
+        assert_eq!(
+            r#"SELECT json_build_object('name', "name") FROM "User""#,
+            sql
+        );
     }
 }
