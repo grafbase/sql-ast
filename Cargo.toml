@@ -1,7 +1,7 @@
 [package]
 name = "grafbase-sql-ast"
 description = "An AST to generate SQL queries"
-version = "0.1.2"
+version = "0.1.3"
 edition = "2021"
 authors = ["Grafbase"]
 license = "Apache-2.0"
