@@ -119,6 +119,9 @@ pub trait Renderer<'a> {
     #[cfg(feature = "postgresql")]
     fn visit_encode(&mut self, encode: Encode<'a>);
 
+    /// A walk through an `DELETE` statement
+    fn visit_delete(&mut self, delete: Delete<'a>);
+
     /// A visit to a value we parameterize
     fn visit_parameterized(&mut self, value: Value) {
         self.add_parameter(value);
@@ -319,17 +322,6 @@ pub trait Renderer<'a> {
             if i < (len - 1) {
                 self.write(", ");
             }
-        }
-    }
-
-    /// A walk through an `DELETE` statement
-    fn visit_delete(&mut self, delete: Delete<'a>) {
-        self.write("DELETE FROM ");
-        self.visit_table(delete.table, true);
-
-        if let Some(conditions) = delete.conditions {
-            self.write(" WHERE ");
-            self.visit_conditions(conditions);
         }
     }
 

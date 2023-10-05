@@ -150,6 +150,30 @@ impl<'a> Renderer<'a> for Postgres {
         };
     }
 
+    fn visit_delete(&mut self, delete: Delete<'a>) {
+        self.write("DELETE FROM ");
+        self.visit_table(delete.table, true);
+
+        if let Some(conditions) = delete.conditions {
+            self.write(" WHERE ");
+            self.visit_conditions(conditions);
+        }
+
+        if let Some(returning) = delete.returning {
+            self.write(" RETURNING ");
+
+            let length = returning.len();
+
+            for (i, expression) in returning.into_iter().enumerate() {
+                self.visit_expression(expression);
+
+                if i < (length - 1) {
+                    self.write(", ");
+                }
+            }
+        }
+    }
+
     fn visit_aggregate_to_string(&mut self, value: Expression<'a>) {
         self.write("ARRAY_TO_STRING");
         self.write("(");
