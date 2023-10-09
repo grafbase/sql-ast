@@ -486,8 +486,11 @@ mod tests {
     #[test]
     fn test_single_row_insert() {
         let expected = expected_values("INSERT INTO \"users\" (\"foo\") VALUES ($1)", vec![10]);
-        let query = Insert::single_into("users").value("foo", 10);
-        let (sql, params) = Postgres::build(query);
+
+        let mut insert = Insert::single_into("users");
+        insert.value("foo", 10);
+
+        let (sql, params) = Postgres::build(insert);
 
         assert_eq!(expected.0, sql);
         assert_eq!(expected.1, params);
@@ -500,8 +503,14 @@ mod tests {
             "INSERT INTO \"users\" (\"foo\") VALUES ($1) RETURNING \"foo\"",
             vec![10],
         );
-        let query = Insert::single_into("users").value("foo", 10);
-        let (sql, params) = Postgres::build(Insert::from(query).returning(vec!["foo"]));
+
+        let mut query = Insert::single_into("users");
+        query.value("foo", 10);
+
+        let mut query = query.build();
+        query.returning(vec!["foo"]);
+
+        let (sql, params) = Postgres::build(query);
 
         assert_eq!(expected.0, sql);
         assert_eq!(expected.1, params);
@@ -518,9 +527,15 @@ mod tests {
         let update = Update::table("users")
             .set("foo", 3)
             .so_that(("users", "foo").equals(1));
-        let query: Insert = Insert::single_into("users").value("foo", 10).into();
-        let query = query.on_conflict(OnConflict::Update(update, Vec::from(["foo".into()])));
-        let (sql, params) = Postgres::build(query.returning(vec!["foo"]));
+
+        let mut insert = Insert::single_into("users");
+        insert.value("foo", 10);
+
+        let mut insert = insert.build();
+        insert.returning(vec!["foo"]);
+        insert.on_conflict(OnConflict::Update(update, Vec::from(["foo".into()])));
+
+        let (sql, params) = Postgres::build(insert);
 
         assert_eq!(expected.0, sql);
         assert_eq!(expected.1, params);
@@ -533,11 +548,11 @@ mod tests {
             vec![10, 11],
         );
 
-        let query = Insert::multi_into("users", vec!["foo"])
-            .values(vec![10])
-            .values(vec![11]);
+        let mut insert = Insert::multi_into("users", vec!["foo"]);
+        insert.values(vec![10]);
+        insert.values(vec![11]);
 
-        let (sql, params) = Postgres::build(query);
+        let (sql, params) = Postgres::build(insert);
 
         assert_eq!(expected.0, sql);
         assert_eq!(expected.1, params);
@@ -742,9 +757,9 @@ mod tests {
 
     #[test]
     fn test_default_insert() {
-        let insert = Insert::single_into("foo")
-            .value("foo", "bar")
-            .value("baz", default_value());
+        let mut insert = Insert::single_into("foo");
+        insert.value("foo", "bar");
+        insert.value("baz", default_value());
 
         let (sql, _) = Postgres::build(insert);
 
@@ -789,6 +804,26 @@ mod tests {
 
         assert_eq!(
             r#"SELECT json_build_object('name', "name") FROM "User""#,
+            sql
+        );
+    }
+
+    #[test]
+    fn test_cte() {
+        let mut insert = Insert::single_into("User");
+        insert.value("name", "Musti");
+
+        let mut insert = insert.build();
+        insert.returning(["id", "name"]);
+
+        let mut select = Select::from_table("public_user");
+        select.with(CommonTableExpression::new("public_user", insert));
+        select.columns(["id", "name"]);
+
+        let (sql, _) = Postgres::build(select);
+
+        assert_eq!(
+            r#"WITH "public_user" AS (INSERT INTO "User" ("name") VALUES ($1) RETURNING "id", "name") SELECT "id", "name" FROM "public_user""#,
             sql
         );
     }

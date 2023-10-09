@@ -3,6 +3,7 @@
 //! The ast module handles everything related building abstract SQL queries
 //! without going into database-level specifics.
 mod column;
+mod common_table_expression;
 mod compare;
 mod conditions;
 mod conjunctive;
@@ -23,6 +24,7 @@ mod update;
 mod values;
 
 pub use column::{Column, TypeDataLength};
+pub use common_table_expression::CommonTableExpression;
 pub use compare::{Comparable, Compare, JsonCompare, JsonType};
 pub use conditions::ConditionTree;
 pub use conjunctive::Conjunctive;

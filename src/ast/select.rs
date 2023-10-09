@@ -1,8 +1,8 @@
 use std::borrow::Cow;
 
 use super::{
-    Column, ConditionTree, Expression, ExpressionKind, Grouping, IntoGroupByDefinition,
-    IntoOrderDefinition, Join, JoinData, Ordering, Query, Table,
+    Column, CommonTableExpression, ConditionTree, Expression, ExpressionKind, Grouping,
+    IntoGroupByDefinition, IntoOrderDefinition, Join, JoinData, Ordering, Query, Table,
 };
 
 type Type<'a> = ConditionTree<'a>;
@@ -10,6 +10,7 @@ type Type<'a> = ConditionTree<'a>;
 /// A builder for a `SELECT` statement.
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct Select<'a> {
+    pub(crate) ctes: Vec<CommonTableExpression<'a>>,
     pub(crate) distinct: bool,
     pub(crate) tables: Vec<Table<'a>>,
     pub(crate) columns: Vec<Expression<'a>>,
@@ -164,19 +165,20 @@ impl<'a> Select<'a> {
     /// ```rust
     /// # use grafbase_sql_ast::{ast::*, renderer::{Renderer, self}};
     /// # fn main() {
-    /// let query = Select::from_table("users").columns(vec!["foo", "bar"]);
+    /// let mut query = Select::from_table("users");
+    /// query.columns(["foo", "bar"]);
+    ///
     /// let (sql, _) = renderer::Postgres::build(query);
     ///
     /// assert_eq!(r#"SELECT "foo", "bar" FROM "users""#, sql);
     /// # }
     /// ```
-    pub fn columns<T, C>(mut self, columns: T) -> Self
+    pub fn columns<T, C>(&mut self, columns: T)
     where
         T: IntoIterator<Item = C>,
         C: Into<Column<'a>>,
     {
         self.columns = columns.into_iter().map(|c| c.into().into()).collect();
-        self
     }
 
     /// Adds `DISTINCT` to the select query.
@@ -526,5 +528,10 @@ impl<'a> Select<'a> {
     /// # }
     pub fn offset(&mut self, offset: u32) {
         self.offset = Some(offset);
+    }
+
+    /// Adds a common table expression to the select.
+    pub fn with(&mut self, cte: CommonTableExpression<'a>) {
+        self.ctes.push(cte);
     }
 }

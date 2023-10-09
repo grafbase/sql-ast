@@ -158,8 +158,32 @@ pub trait Renderer<'a> {
         self.visit_conditions(data.conditions)
     }
 
+    fn visit_common_table_expression(&mut self, cte: CommonTableExpression<'a>) {
+        self.visit_table(Table::from(cte.name.into_owned()), false);
+        self.write(" AS ");
+
+        let query = cte.query;
+        self.surround_with("(", ")", |ref mut s| s.visit_query(query));
+    }
+
     /// A walk through a `SELECT` statement
     fn visit_select(&mut self, select: Select<'a>) {
+        let number_of_ctes = select.ctes.len();
+
+        if number_of_ctes > 0 {
+            self.write("WITH ");
+
+            for (i, cte) in select.ctes.into_iter().enumerate() {
+                self.visit_common_table_expression(cte);
+
+                if i < (number_of_ctes - 1) {
+                    self.write(", ");
+                }
+            }
+
+            self.write(" ");
+        }
+
         self.write("SELECT ");
 
         if select.distinct {

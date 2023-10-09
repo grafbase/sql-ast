@@ -166,15 +166,13 @@ impl<'a> Insert<'a> {
     }
 
     /// Sets the conflict resolution strategy.
-    pub fn on_conflict(mut self, on_conflict: OnConflict<'a>) -> Self {
+    pub fn on_conflict(&mut self, on_conflict: OnConflict<'a>) {
         self.on_conflict = Some(on_conflict);
-        self
     }
 
     /// Adds a comment to the insert.
-    pub fn comment<C: Into<Cow<'a, str>>>(mut self, comment: C) -> Self {
+    pub fn comment<C: Into<Cow<'a, str>>>(&mut self, comment: C) {
         self.comment = Some(comment.into());
-        self
     }
 
     /// Sets the returned columns.
@@ -183,13 +181,12 @@ impl<'a> Insert<'a> {
         feature = "docs",
         doc(cfg(any(feature = "postgresql", feature = "mssql", feature = "sqlite")))
     )]
-    pub fn returning<K, I>(mut self, columns: I) -> Self
+    pub fn returning<K, I>(&mut self, columns: I)
     where
         K: Into<Column<'a>>,
         I: IntoIterator<Item = K>,
     {
         self.returning = Some(columns.into_iter().map(|k| k.into()).collect());
-        self
     }
 }
 
@@ -199,22 +196,22 @@ impl<'a> SingleRowInsert<'a> {
     /// ```rust
     /// # use grafbase_sql_ast::{ast::*, renderer::{Renderer, self}};
     /// # fn main() {
-    /// let query = Insert::single_into("users").value("foo", 10);
+    /// let mut query = Insert::single_into("users");
+    /// query.value("foo", 10);
+    ///
     /// let (sql, params) = renderer::Postgres::build(query);
     ///
     /// assert_eq!(r#"INSERT INTO "users" ("foo") VALUES ($1)"#, sql);
     /// assert_eq!(vec![Value::from(10)], params);
     /// # }
     /// ```
-    pub fn value<K, V>(mut self, key: K, val: V) -> SingleRowInsert<'a>
+    pub fn value<K, V>(&mut self, key: K, val: V)
     where
         K: Into<Column<'a>>,
         V: Into<Expression<'a>>,
     {
         self.columns.push(key.into());
         self.values.push(val.into());
-
-        self
     }
 
     /// Convert into a common `Insert` statement.
@@ -229,9 +226,10 @@ impl<'a> MultiRowInsert<'a> {
     /// ```rust
     /// # use grafbase_sql_ast::{ast::*, renderer::{Renderer, self}};
     /// # fn main() {
-    /// let query = Insert::multi_into("users", vec!["foo"])
-    ///     .values(vec![1])
-    ///     .values(vec![2]);
+    /// let mut query = Insert::multi_into("users", vec!["foo"]);
+    ///
+    /// query.values(vec![1]);
+    /// query.values(vec![2]);
     ///
     /// let (sql, params) = renderer::Postgres::build(query);
     ///
@@ -244,12 +242,11 @@ impl<'a> MultiRowInsert<'a> {
     ///     ], params);
     /// # }
     /// ```
-    pub fn values<V>(mut self, values: V) -> Self
+    pub fn values<V>(&mut self, values: V)
     where
         V: Into<Row<'a>>,
     {
         self.values.push(values.into());
-        self
     }
 
     /// Convert into a common `Insert` statement.
