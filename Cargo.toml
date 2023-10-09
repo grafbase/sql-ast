@@ -16,4 +16,5 @@ mysql = []
 sqlite = []
 
 [dependencies]
+anyhow = "1.0.75"
 serde_json = "1"

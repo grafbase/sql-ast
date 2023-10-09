@@ -1,5 +1,7 @@
 use std::borrow::Cow;
 
+use anyhow::anyhow;
+
 use crate::ast::{Column, Expression, Query, Row, Table, Update, Values};
 
 /// A builder for an `INSERT` statement.
@@ -214,6 +216,25 @@ impl<'a> SingleRowInsert<'a> {
         self.values.push(val.into());
     }
 
+    /// Merge two single row inserts into a multi row insert.
+    ///
+    /// Both inserts must be to the same table and must include the same columns.
+    pub fn merge(self, other: SingleRowInsert<'a>) -> anyhow::Result<MultiRowInsert<'a>> {
+        if self.table != other.table {
+            return Err(anyhow!("Merging inserts must be on the same table.",));
+        }
+
+        if self.columns != other.columns {
+            return Err(anyhow!("All insert items must have the same columns."));
+        }
+
+        Ok(MultiRowInsert {
+            table: self.table,
+            columns: self.columns,
+            values: vec![self.values, other.values],
+        })
+    }
+
     /// Convert into a common `Insert` statement.
     pub fn build(self) -> Insert<'a> {
         Insert::from(self)
@@ -247,6 +268,23 @@ impl<'a> MultiRowInsert<'a> {
         V: Into<Row<'a>>,
     {
         self.values.push(values.into());
+    }
+
+    /// Extend the insert statement with a single row insert.
+    ///
+    /// Both inserts must be to the same table and must include the same columns.
+    pub fn extend(&mut self, other: SingleRowInsert<'a>) -> anyhow::Result<()> {
+        if self.table != other.table {
+            return Err(anyhow!("Merging inserts must be on the same table.",));
+        }
+
+        if self.columns != other.columns {
+            return Err(anyhow!("All insert items must have the same columns."));
+        }
+
+        self.values.push(other.values);
+
+        Ok(())
     }
 
     /// Convert into a common `Insert` statement.
