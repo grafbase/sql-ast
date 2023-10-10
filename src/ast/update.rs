@@ -38,9 +38,11 @@ impl<'a> Update<'a> {
     /// ```rust
     /// # use grafbase_sql_ast::{ast::*, renderer::{Renderer, self}};
     /// # fn main() {
-    /// let query = Update::table("users").set("foo", 10).set("bar", false);
-    /// let (sql, params) = renderer::Postgres::build(query);
+    /// let mut query = Update::table("users");
+    /// query.set("foo", 10);
+    /// query.set("bar", false);
     ///
+    /// let (sql, params) = renderer::Postgres::build(query);
     /// assert_eq!(r#"UPDATE "users" SET "foo" = $1, "bar" = $2"#, sql);
     ///
     /// assert_eq!(
@@ -52,15 +54,13 @@ impl<'a> Update<'a> {
     /// );
     /// # }
     /// ```
-    pub fn set<K, V>(mut self, column: K, value: V) -> Update<'a>
+    pub fn set<K, V>(&mut self, column: K, value: V)
     where
         K: Into<Column<'a>>,
         V: Into<Expression<'a>>,
     {
         self.columns.push(column.into());
         self.values.push(value.into());
-
-        self
     }
 
     /// Adds `WHERE` conditions to the query. See
@@ -69,7 +69,10 @@ impl<'a> Update<'a> {
     /// ```rust
     /// # use grafbase_sql_ast::{ast::*, renderer::{Renderer, self}};
     /// # fn main() {
-    /// let query = Update::table("users").set("foo", 1).so_that("bar".equals(false));
+    /// let mut query = Update::table("users");
+    /// query.set("foo", 1);
+    /// query.so_that("bar".equals(false));
+    ///
     /// let (sql, params) = renderer::Postgres::build(query);
     ///
     /// assert_eq!(r#"UPDATE "users" SET "foo" = $1 WHERE "bar" = $2"#, sql);
@@ -93,7 +96,10 @@ impl<'a> Update<'a> {
     /// select.column("id");
     /// select.so_that("uniq_val".equals(3));
     ///
-    /// let query = Update::table("users").set("foo", 1).so_that("bar".equals(select));
+    /// let mut query = Update::table("users");
+    /// query.set("foo", 1);
+    /// query.so_that("bar".equals(select));
+    ///
     /// let (sql, params) = renderer::Postgres::build(query);
     ///
     /// assert_eq!(
@@ -110,12 +116,11 @@ impl<'a> Update<'a> {
     /// );
     /// # }
     /// ```
-    pub fn so_that<T>(mut self, conditions: T) -> Self
+    pub fn so_that<T>(&mut self, conditions: T)
     where
         T: Into<ConditionTree<'a>>,
     {
         self.conditions = Some(conditions.into());
-        self
     }
 
     /// Sets the returned columns.
@@ -123,20 +128,21 @@ impl<'a> Update<'a> {
     /// ```rust
     /// # use grafbase_sql_ast::{ast::*, renderer::{Renderer, self}};
     /// # fn main() {
-    /// let update = Update::table("users").set("foo", 10);
-    /// let update = update.returning(vec!["id"]);
+    /// let mut update = Update::table("users");
+    /// update.set("foo", 10);
+    /// update.returning(vec!["id"]);
+    ///
     /// let (sql, _) = renderer::Postgres::build(update);
     ///
     /// assert_eq!(r#"UPDATE "users" SET "foo" = $1 RETURNING "id""#, sql);
     /// # }
     /// ```
     #[cfg(feature = "postgresql")]
-    pub fn returning<K, I>(mut self, columns: I) -> Self
+    pub fn returning<K, I>(&mut self, columns: I)
     where
         K: Into<Column<'a>>,
         I: IntoIterator<Item = K>,
     {
         self.returning = Some(columns.into_iter().map(|k| k.into()).collect());
-        self
     }
 }

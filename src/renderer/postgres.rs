@@ -524,9 +524,9 @@ mod tests {
             vec![10, 3, 1],
         );
 
-        let update = Update::table("users")
-            .set("foo", 3)
-            .so_that(("users", "foo").equals(1));
+        let mut update = Update::table("users");
+        update.set("foo", 3);
+        update.so_that(("users", "foo").equals(1));
 
         let mut insert = Insert::single_into("users");
         insert.value("foo", 10);
