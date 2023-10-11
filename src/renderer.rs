@@ -424,7 +424,7 @@ pub trait Renderer<'a> {
                 se.write(" % ");
                 se.visit_expression(right)
             }),
-            SqlOp::AppendJson(left, right) => self.surround_with("(", ")", |ref mut se| {
+            SqlOp::Append(left, right) => self.surround_with("(", ")", |ref mut se| {
                 se.visit_expression(left);
                 se.write(" || ");
                 se.visit_expression(right)

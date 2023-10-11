@@ -9,7 +9,7 @@ pub enum SqlOp<'a> {
     Mul(Expression<'a>, Expression<'a>),
     Div(Expression<'a>, Expression<'a>),
     Rem(Expression<'a>, Expression<'a>),
-    AppendJson(Expression<'a>, Expression<'a>),
+    Append(Expression<'a>, Expression<'a>),
     JsonDeleteAtPath(Expression<'a>, Expression<'a>),
 }
 
